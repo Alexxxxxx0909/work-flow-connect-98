@@ -2,12 +2,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { JobType } from './JobContext';
 import {
-  getAllUsers as getFirebaseUsers,
-  getUserById as getFirebaseUserById,
-  getJobCategories as getFirebaseJobCategories,
-  getSkillsList as getFirebaseSkillsList,
-  getAllJobs as getFirebaseJobs
-} from '@/lib/firebaseUtils';
+  getAllUsers as getMockUsers,
+  getUserById as getMockUserById,
+  getJobCategories as getMockJobCategories,
+  getSkillsList as getMockSkillsList,
+  getAllJobs as getMockJobs
+} from '@/lib/mockData';
 
 // Make sure the UserType in DataContext matches or extends the AuthContext UserType
 export type UserType = {
@@ -61,8 +61,8 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     try {
       // Load users
-      const usersData = await getFirebaseUsers();
-      // Convert Firebase users to DataContext UserType
+      const usersData = await getMockUsers();
+      // Convert users to DataContext UserType
       const convertedUsers = usersData.map(user => ({
         id: user.id,
         name: user.name || "",
@@ -77,14 +77,14 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
       setUsers(convertedUsers);
       
       // Load jobs
-      const jobsData = await getFirebaseJobs();
+      const jobsData = await getMockJobs();
       setJobs(jobsData);
       
       // Load categories and skills
-      const categories = await getFirebaseJobCategories();
+      const categories = await getMockJobCategories();
       setJobCategories(categories);
       
-      const skills = await getFirebaseSkillsList();
+      const skills = await getMockSkillsList();
       setSkillsList(skills);
     } catch (error) {
       console.error("Error loading data:", error);

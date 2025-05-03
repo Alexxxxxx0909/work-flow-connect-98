@@ -1,15 +1,15 @@
+
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
 import { toast } from "@/components/ui/use-toast";
 import { 
-  registerUser, 
-  loginUser, 
-  logoutUser, 
-  updateUserProfile as updateFirebaseUserProfile,
-  uploadUserPhoto
-} from "@/lib/firebaseUtils";
+  registerUser as registerMockUser, 
+  loginUser as loginMockUser, 
+  logoutUser as logoutMockUser, 
+  updateUserProfile as updateMockUserProfile,
+  uploadUserPhoto as uploadMockUserPhoto,
+  getCurrentUser,
+  getUserById
+} from "@/lib/mockData";
 
 export type UserType = {
   id: string;
@@ -52,46 +52,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Check if a user is already logged in
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const userDoc = await getDoc(doc(db, "users", user.uid));
-          if (userDoc.exists()) {
-            setCurrentUser({
-              id: user.uid,
-              ...userDoc.data() as Omit<UserType, "id">
-            });
-          } else {
-            setCurrentUser({
-              id: user.uid,
-              name: user.displayName || "",
-              email: user.email || "",
-              photoURL: user.photoURL || undefined,
-              role: "freelancer"
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Error al cargar los datos del usuario"
-          });
-        }
-      } else {
-        setCurrentUser(null);
+    const checkCurrentUser = async () => {
+      try {
+        const user = getCurrentUser();
+        setCurrentUser(user);
+      } catch (error) {
+        console.error("Error checking current user:", error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    };
 
-    return () => unsubscribe();
+    checkCurrentUser();
   }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const user = await loginUser(email, password);
+      const user = await loginMockUser(email, password);
       setCurrentUser(user);
       toast({
         title: "Inicio de sesión exitoso",
@@ -112,7 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (email: string, password: string, name: string) => {
     setLoading(true);
     try {
-      const user = await registerUser(email, password, name);
+      const user = await registerMockUser(email, password, name);
       setCurrentUser(user);
       toast({
         title: "Registro exitoso",
@@ -132,7 +112,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await logoutUser();
+      await logoutMockUser();
       setCurrentUser(null);
       toast({
         title: "Sesión cerrada",
@@ -151,7 +131,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!currentUser) throw new Error('No hay usuario autenticado');
     
     try {
-      await updateFirebaseUserProfile(currentUser.id, data);
+      await updateMockUserProfile(currentUser.id, data);
       setCurrentUser(prev => prev ? { ...prev, ...data } : null);
       toast({
         title: "Perfil actualizado",
@@ -172,7 +152,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     try {
       console.log("Iniciando proceso de subida de foto de perfil");
-      const photoURL = await uploadUserPhoto(currentUser.id, file);
+      const photoURL = await uploadMockUserPhoto(currentUser.id, file);
       
       setCurrentUser(prev => prev ? { ...prev, photoURL } : null);
       
